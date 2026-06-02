@@ -1,0 +1,7 @@
+.DS_Store
+*.log
+
+# Variante B: vendor wird NICHT committed, der Release-Workflow zieht den Core
+# (GitHub-VCS) und plugin-update-checker frisch via composer install.
+# composer.lock bleibt committed fuer reproduzierbare Builds.
+/vendor/
