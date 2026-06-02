@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace RhBackup\Admin;
 
-use RhBackup\Db\BackupStorage;
 use RhBackup\Db\Exporter;
 use RhBackup\Db\Importer;
 use RhBlueprint\Core\Settings\SettingsPage;
+use RhBlueprint\Core\Storage;
 
 final class DbToolsPage
 {
@@ -18,7 +18,7 @@ final class DbToolsPage
     public const NONCE_DELETE = 'rhbp_db_delete';
 
     public function __construct(
-        private readonly BackupStorage $storage,
+        private readonly Storage $storage,
         private readonly Exporter $exporter,
         private readonly Importer $importer
     ) {

@@ -4,20 +4,20 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "56d8572a94bea458b90220be0f8847e0",
+    "content-hash": "500818fe04f2eb382803f0bc987d3091",
     "packages": [
         {
             "name": "rh/blueprint-core",
-            "version": "v1.0.0",
+            "version": "v1.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/herbeckrobin/rh-blueprint-core.git",
-                "reference": "52150741f848a53ce0d7f318c2ccd260c461476d"
+                "reference": "c4522ab1a91efc360813225b2585b21e8a5c836c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/herbeckrobin/rh-blueprint-core/zipball/52150741f848a53ce0d7f318c2ccd260c461476d",
-                "reference": "52150741f848a53ce0d7f318c2ccd260c461476d",
+                "url": "https://api.github.com/repos/herbeckrobin/rh-blueprint-core/zipball/c4522ab1a91efc360813225b2585b21e8a5c836c",
+                "reference": "c4522ab1a91efc360813225b2585b21e8a5c836c",
                 "shasum": ""
             },
             "require": {
@@ -40,10 +40,10 @@
             ],
             "description": "Geteilter Core fuer die rh-blueprint Plugin-Kollektion: Service-Registry, Settings-Framework, Shared Admin-UI, Environment-Helper.",
             "support": {
-                "source": "https://github.com/herbeckrobin/rh-blueprint-core/tree/v1.0.0",
+                "source": "https://github.com/herbeckrobin/rh-blueprint-core/tree/v1.1.0",
                 "issues": "https://github.com/herbeckrobin/rh-blueprint-core/issues"
             },
-            "time": "2026-06-02T14:26:54+00:00"
+            "time": "2026-06-02T14:46:52+00:00"
         },
         {
             "name": "yahnis-elsts/plugin-update-checker",

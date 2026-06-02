@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace RhBackup;
 
 use RhBackup\Admin\DbToolsPage;
-use RhBackup\Db\BackupStorage;
 use RhBackup\Db\Exporter;
 use RhBackup\Db\Importer;
 use RhBackup\Db\SearchReplace;
@@ -30,7 +29,7 @@ final class Plugin
 
     public static function onCoreBooted(Core $core): void
     {
-        $storage = new BackupStorage();
+        $storage = $core->storage();
         $searchReplace = new SearchReplace();
         $exporter = new Exporter($storage);
         $importer = new Importer($storage, $searchReplace);

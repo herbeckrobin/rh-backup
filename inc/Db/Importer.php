@@ -4,13 +4,15 @@ declare(strict_types=1);
 
 namespace RhBackup\Db;
 
+use RhBlueprint\Core\Storage;
+
 final class Importer
 {
     /** @var array<int, string> */
     private const ALLOWED_ENTRIES = ['db.sql', 'manifest.json'];
 
     public function __construct(
-        private readonly BackupStorage $storage,
+        private readonly Storage $storage,
         private readonly SearchReplace $searchReplace
     ) {
     }

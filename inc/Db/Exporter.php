@@ -4,11 +4,13 @@ declare(strict_types=1);
 
 namespace RhBackup\Db;
 
+use RhBlueprint\Core\Storage;
+
 final class Exporter
 {
     public const CHUNK_SIZE = 500;
 
-    public function __construct(private readonly BackupStorage $storage)
+    public function __construct(private readonly Storage $storage)
     {
     }
 

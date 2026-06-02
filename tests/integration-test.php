@@ -64,7 +64,8 @@ do_action('plugins_loaded'); // Negotiation -> Core::boot, hängt init-Hook
 do_action('init');           // bootFeatures -> core/booted -> onCoreBooted
 
 check('Core ist gebootet', \RhBlueprint\Core\Core::isBooted());
-check('Core-Version 1.0.0 geladen', rh_blueprint()->version() === '1.0.0');
+check('Core-Version 1.1.0 geladen', rh_blueprint()->version() === '1.1.0');
+check('Core-Storage verfügbar', rh_blueprint()->storage() instanceof \RhBlueprint\Core\Storage);
 
 $backup = rh_blueprint()->services()->get('backup', 1);
 check('backup-Service ist registriert', $backup instanceof \RhBackup\Api);
