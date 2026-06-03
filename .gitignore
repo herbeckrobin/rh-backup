@@ -5,3 +5,6 @@
 # (GitHub-VCS) und plugin-update-checker frisch via composer install.
 # composer.lock bleibt committed fuer reproduzierbare Builds.
 /vendor/
+
+# WordPress.org-Build-Output (bin/build-wporg.sh)
+/dist/

@@ -18,8 +18,11 @@ final class Plugin
 {
     public static function boot(): void
     {
-        // Auto-Update läuft unabhängig vom Core.
-        (new UpdateChecker())->boot();
+        // Auto-Update läuft unabhängig vom Core. Im WordPress.org-Build wird der
+        // UpdateChecker entfernt (WP.org liefert Updates selbst), darum defensiv.
+        if (class_exists(UpdateChecker::class)) {
+            (new UpdateChecker())->boot();
+        }
 
         add_action('rh-blueprint/core/booted', [self::class, 'onCoreBooted']);
     }

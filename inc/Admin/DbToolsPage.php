@@ -39,6 +39,7 @@ final class DbToolsPage
             return;
         }
 
+        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nur Anzeige einer Status-Meldung nach Redirect, keine zustandsändernde Aktion.
         $message = isset($_GET['rhbp_message']) ? sanitize_key((string) $_GET['rhbp_message']) : '';
         if ($message === '') {
             return;
@@ -113,12 +114,12 @@ final class DbToolsPage
         }
         check_admin_referer(self::NONCE_IMPORT);
 
-        $confirmation = isset($_POST['confirm']) ? sanitize_text_field((string) $_POST['confirm']) : '';
+        $confirmation = isset($_POST['confirm']) ? sanitize_text_field(wp_unslash($_POST['confirm'])) : '';
         if ($confirmation !== 'JA LOESCHEN') {
             $this->redirect('import_not_confirmed');
         }
 
-        $file = isset($_POST['backup_file']) ? sanitize_file_name((string) $_POST['backup_file']) : '';
+        $file = isset($_POST['backup_file']) ? sanitize_file_name(wp_unslash($_POST['backup_file'])) : '';
         if ($file === '') {
             $this->redirect('import_no_file');
         }
@@ -144,10 +145,11 @@ final class DbToolsPage
         }
         check_admin_referer(self::NONCE_DELETE);
 
-        $file = isset($_POST['backup_file']) ? sanitize_file_name((string) $_POST['backup_file']) : '';
+        $file = isset($_POST['backup_file']) ? sanitize_file_name(wp_unslash($_POST['backup_file'])) : '';
         if ($file !== '') {
             $resolved = $this->storage->resolveInside($this->storage->backupsPath(), $file);
             if ($resolved !== null && is_file($resolved)) {
+                // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Cleanup einer eigenen Backup-Datei, ein Fehlschlag ist unkritisch.
                 @unlink($resolved);
             }
         }
