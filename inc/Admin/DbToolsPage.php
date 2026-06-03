@@ -193,7 +193,7 @@ final class DbToolsPage
 
         echo '<div class="rhbp-db-card">';
         echo '<h3>' . esc_html__('Backup wiederherstellen', 'rh-blueprint') . '</h3>';
-        echo '<p class="rhbp-db-card__warning">' . esc_html__('Achtung: Die aktuelle Datenbank wird überschrieben. Dieser Vorgang kann nicht rueckgaengig gemacht werden.', 'rh-blueprint') . '</p>';
+        echo '<p class="rhbp-db-card__warning">' . esc_html__('Achtung: Die aktuelle Datenbank wird überschrieben. Dieser Vorgang kann nicht rückgängig gemacht werden.', 'rh-blueprint') . '</p>';
 
         if ($backups === []) {
             echo '<p class="rhbp-empty">' . esc_html__('Noch keine Backups vorhanden.', 'rh-blueprint') . '</p>';
