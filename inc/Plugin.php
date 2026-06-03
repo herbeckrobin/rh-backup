@@ -5,17 +5,14 @@ declare(strict_types=1);
 namespace RhBackup;
 
 use RhBackup\Admin\DbToolsPage;
-use RhBackup\Db\Exporter;
-use RhBackup\Db\Importer;
-use RhBackup\Db\SearchReplace;
 use RhBlueprint\Core\Core;
 
 /**
  * Bootstrap von rh-backup.
  *
- * Das Plugin hängt sich an den Core-Hook `rh-blueprint/core/booted` statt direkt
- * zu booten. So ist sichergestellt, dass der Core (Service-Registry, Settings-Hub)
- * bereitsteht. Fehlt der Core, passiert nichts (graceful).
+ * Hängt sich an den Core-Hook `rh-blueprint/core/booted`. Die DB-Funktionalität
+ * (Export/Import/Storage) kommt aus dem geteilten db-engine-Package (`rh_db_engine()`),
+ * nicht mehr aus dem Core. rh-backup ist damit eine reine UI über der Engine.
  */
 final class Plugin
 {
@@ -29,16 +26,24 @@ final class Plugin
 
     public static function onCoreBooted(Core $core): void
     {
-        $storage = $core->storage();
-        $searchReplace = new SearchReplace();
-        $exporter = new Exporter($storage);
-        $importer = new Importer($storage, $searchReplace);
+        if (! function_exists('rh_db_engine')) {
+            return;
+        }
 
-        // Backup-API für andere Plugins (rh-sync) bereitstellen.
-        $core->services()->register('backup', new Api($exporter, $importer), Api::VERSION);
+        $engine = rh_db_engine();
 
-        // Tools-Tab und DB-Tools-UI in die geteilte Settings-Page einklinken.
-        $core->settings()->registerTab('tools', __('Tools', 'rh-backup'), 20);
-        (new DbToolsPage($storage, $exporter, $importer))->boot();
+        // Backup-Tab und DB-Tools-UI in die geteilte Settings-Page einklinken.
+        $core->settings()->registerTab('backup', __('Backup', 'rh-backup'), 20);
+        (new DbToolsPage($engine->storage(), $engine->exporter(), $engine->importer()))->boot();
+
+        // Dashboard-Quick-Link beisteuern.
+        add_filter('rh-blueprint/dashboard/quick_links', static function (array $links): array {
+            $links[] = [
+                'label' => __('Backup', 'rh-backup'),
+                'url' => admin_url('admin.php?page=' . \RhBlueprint\Core\Settings\SettingsPage::MENU_SLUG . '&tab=backup'),
+                'icon' => 'database',
+            ];
+            return $links;
+        });
     }
 }

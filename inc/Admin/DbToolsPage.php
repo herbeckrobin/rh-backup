@@ -4,14 +4,14 @@ declare(strict_types=1);
 
 namespace RhBackup\Admin;
 
-use RhBackup\Db\Exporter;
-use RhBackup\Db\Importer;
 use RhBlueprint\Core\Settings\SettingsPage;
-use RhBlueprint\Core\Storage;
+use RhDbEngine\Exporter;
+use RhDbEngine\Importer;
+use RhDbEngine\Storage;
 
 final class DbToolsPage
 {
-    public const TAB_ID = 'tools';
+    public const TAB_ID = 'backup';
     public const CAPABILITY = 'manage_options';
     public const NONCE_EXPORT = 'rhbp_db_export';
     public const NONCE_IMPORT = 'rhbp_db_import';
@@ -161,7 +161,7 @@ final class DbToolsPage
             'page' => SettingsPage::MENU_SLUG,
             'tab' => self::TAB_ID,
             'rhbp_message' => $message,
-        ], admin_url('options-general.php')));
+        ], admin_url('admin.php')));
         exit;
     }
 
