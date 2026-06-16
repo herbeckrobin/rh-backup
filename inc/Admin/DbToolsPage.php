@@ -46,14 +46,14 @@ final class DbToolsPage
         }
 
         $map = [
-            'export_ok' => ['success', __('Backup erfolgreich erstellt.', 'rh-blueprint')],
-            'export_failed' => ['error', __('Backup konnte nicht erstellt werden.', 'rh-blueprint')],
-            'import_ok' => ['success', __('Backup erfolgreich wiederhergestellt.', 'rh-blueprint')],
-            'import_failed' => ['error', __('Import fehlgeschlagen.', 'rh-blueprint')],
-            'import_not_confirmed' => ['warning', __('Bitte "JA LOESCHEN" eingeben um den Import zu bestätigen.', 'rh-blueprint')],
-            'import_no_file' => ['warning', __('Kein Backup ausgewählt.', 'rh-blueprint')],
-            'import_invalid_path' => ['error', __('Ungültiger Backup-Pfad.', 'rh-blueprint')],
-            'delete_ok' => ['success', __('Backup gelöscht.', 'rh-blueprint')],
+            'export_ok' => ['success', __('Backup erfolgreich erstellt.', 'rh-backup')],
+            'export_failed' => ['error', __('Backup konnte nicht erstellt werden.', 'rh-backup')],
+            'import_ok' => ['success', __('Backup erfolgreich wiederhergestellt.', 'rh-backup')],
+            'import_failed' => ['error', __('Import fehlgeschlagen.', 'rh-backup')],
+            'import_not_confirmed' => ['warning', __('Bitte "JA LOESCHEN" eingeben um den Import zu bestätigen.', 'rh-backup')],
+            'import_no_file' => ['warning', __('Kein Backup ausgewählt.', 'rh-backup')],
+            'import_invalid_path' => ['error', __('Ungültiger Backup-Pfad.', 'rh-backup')],
+            'delete_ok' => ['success', __('Backup gelöscht.', 'rh-backup')],
         ];
 
         if (!isset($map[$message])) {
@@ -75,8 +75,8 @@ final class DbToolsPage
         }
 
         echo '<div class="rhbp-db-tools">';
-        echo '<h2 class="rhbp-db-tools__heading">' . esc_html__('Datenbank & Backups', 'rh-blueprint') . '</h2>';
-        echo '<p class="rhbp-db-tools__intro">' . esc_html__('Export, Import und Verwaltung von DB-Snapshots. Basis für das Sync Network.', 'rh-blueprint') . '</p>';
+        echo '<h2 class="rhbp-db-tools__heading">' . esc_html__('Datenbank & Backups', 'rh-backup') . '</h2>';
+        echo '<p class="rhbp-db-tools__intro">' . esc_html__('Export, Import und Verwaltung von DB-Snapshots. Basis für das Sync Network.', 'rh-backup') . '</p>';
 
         $this->renderExportCard();
         $this->renderImportCard();
@@ -87,7 +87,7 @@ final class DbToolsPage
     public function handleExport(): void
     {
         if (!current_user_can(self::CAPABILITY)) {
-            wp_die(esc_html__('Keine Berechtigung.', 'rh-blueprint'), '', ['response' => 403]);
+            wp_die(esc_html__('Keine Berechtigung.', 'rh-backup'), '', ['response' => 403]);
         }
         check_admin_referer(self::NONCE_EXPORT);
 
@@ -110,7 +110,7 @@ final class DbToolsPage
     public function handleImport(): void
     {
         if (!current_user_can(self::CAPABILITY)) {
-            wp_die(esc_html__('Keine Berechtigung.', 'rh-blueprint'), '', ['response' => 403]);
+            wp_die(esc_html__('Keine Berechtigung.', 'rh-backup'), '', ['response' => 403]);
         }
         check_admin_referer(self::NONCE_IMPORT);
 
@@ -141,7 +141,7 @@ final class DbToolsPage
     public function handleDelete(): void
     {
         if (!current_user_can(self::CAPABILITY)) {
-            wp_die(esc_html__('Keine Berechtigung.', 'rh-blueprint'), '', ['response' => 403]);
+            wp_die(esc_html__('Keine Berechtigung.', 'rh-backup'), '', ['response' => 403]);
         }
         check_admin_referer(self::NONCE_DELETE);
 
@@ -149,8 +149,7 @@ final class DbToolsPage
         if ($file !== '') {
             $resolved = $this->storage->resolveInside($this->storage->backupsPath(), $file);
             if ($resolved !== null && is_file($resolved)) {
-                // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- Cleanup einer eigenen Backup-Datei, ein Fehlschlag ist unkritisch.
-                @unlink($resolved);
+                wp_delete_file($resolved);
             }
         }
 
@@ -170,20 +169,20 @@ final class DbToolsPage
     private function renderExportCard(): void
     {
         echo '<div class="rhbp-db-card">';
-        echo '<h3>' . esc_html__('Backup erstellen', 'rh-blueprint') . '</h3>';
-        echo '<p>' . esc_html__('Erstellt ein ZIP mit Datenbank und Manifest. Wird im Ordner rh-blueprint-data/backups/ gespeichert.', 'rh-blueprint') . '</p>';
+        echo '<h3>' . esc_html__('Backup erstellen', 'rh-backup') . '</h3>';
+        echo '<p>' . esc_html__('Erstellt ein ZIP mit Datenbank und Manifest. Wird im Ordner rh-blueprint-data/backups/ gespeichert.', 'rh-backup') . '</p>';
 
         echo '<form method="post" action="' . esc_url(admin_url('admin-post.php')) . '">';
         wp_nonce_field(self::NONCE_EXPORT);
         echo '<input type="hidden" name="action" value="rhbp_db_export" />';
 
         echo '<label class="rhbp-check"><input type="checkbox" name="include_uploads" value="1" /> ';
-        echo esc_html__('Uploads-Ordner einschliessen (große ZIPs möglich)', 'rh-blueprint');
+        echo esc_html__('Uploads-Ordner einschliessen (große ZIPs möglich)', 'rh-backup');
         echo '</label>';
 
         echo '<div class="rhbp-db-card__actions">';
-        echo '<button type="submit" class="button button-primary">' . esc_html__('Backup erstellen', 'rh-blueprint') . '</button>';
-        echo '<button type="submit" name="download" value="1" class="button">' . esc_html__('Erstellen + Download', 'rh-blueprint') . '</button>';
+        echo '<button type="submit" class="button button-primary">' . esc_html__('Backup erstellen', 'rh-backup') . '</button>';
+        echo '<button type="submit" name="download" value="1" class="button">' . esc_html__('Erstellen + Download', 'rh-backup') . '</button>';
         echo '</div>';
         echo '</form>';
         echo '</div>';
@@ -194,11 +193,11 @@ final class DbToolsPage
         $backups = $this->storage->listBackups();
 
         echo '<div class="rhbp-db-card">';
-        echo '<h3>' . esc_html__('Backup wiederherstellen', 'rh-blueprint') . '</h3>';
-        echo '<p class="rhbp-db-card__warning">' . esc_html__('Achtung: Die aktuelle Datenbank wird überschrieben. Dieser Vorgang kann nicht rückgängig gemacht werden.', 'rh-blueprint') . '</p>';
+        echo '<h3>' . esc_html__('Backup wiederherstellen', 'rh-backup') . '</h3>';
+        echo '<p class="rhbp-db-card__warning">' . esc_html__('Achtung: Die aktuelle Datenbank wird überschrieben. Dieser Vorgang kann nicht rückgängig gemacht werden.', 'rh-backup') . '</p>';
 
         if ($backups === []) {
-            echo '<p class="rhbp-empty">' . esc_html__('Noch keine Backups vorhanden.', 'rh-blueprint') . '</p>';
+            echo '<p class="rhbp-empty">' . esc_html__('Noch keine Backups vorhanden.', 'rh-backup') . '</p>';
             echo '</div>';
             return;
         }
@@ -207,18 +206,18 @@ final class DbToolsPage
         wp_nonce_field(self::NONCE_IMPORT);
         echo '<input type="hidden" name="action" value="rhbp_db_import" />';
 
-        echo '<label>' . esc_html__('Backup auswählen', 'rh-blueprint') . '</label>';
+        echo '<label>' . esc_html__('Backup auswählen', 'rh-backup') . '</label>';
         echo '<select name="backup_file">';
         foreach ($backups as $backup) {
             printf('<option value="%1$s">%1$s</option>', esc_attr($backup));
         }
         echo '</select>';
 
-        echo '<label>' . esc_html__('Zur Bestätigung "JA LOESCHEN" eintippen:', 'rh-blueprint') . '</label>';
+        echo '<label>' . esc_html__('Zur Bestätigung "JA LOESCHEN" eintippen:', 'rh-backup') . '</label>';
         echo '<input type="text" name="confirm" placeholder="JA LOESCHEN" autocomplete="off" />';
 
         echo '<div class="rhbp-db-card__actions">';
-        echo '<button type="submit" class="button button-primary">' . esc_html__('Backup wiederherstellen', 'rh-blueprint') . '</button>';
+        echo '<button type="submit" class="button button-primary">' . esc_html__('Backup wiederherstellen', 'rh-backup') . '</button>';
         echo '</div>';
         echo '</form>';
         echo '</div>';
@@ -229,18 +228,18 @@ final class DbToolsPage
         $backups = $this->storage->listBackups();
 
         echo '<div class="rhbp-db-card">';
-        echo '<h3>' . esc_html__('Vorhandene Backups', 'rh-blueprint') . '</h3>';
+        echo '<h3>' . esc_html__('Vorhandene Backups', 'rh-backup') . '</h3>';
 
         if ($backups === []) {
-            echo '<p class="rhbp-empty">' . esc_html__('Keine Backups vorhanden.', 'rh-blueprint') . '</p>';
+            echo '<p class="rhbp-empty">' . esc_html__('Keine Backups vorhanden.', 'rh-backup') . '</p>';
             echo '</div>';
             return;
         }
 
         echo '<table class="rhbp-db-table"><thead><tr>';
-        echo '<th>' . esc_html__('Datei', 'rh-blueprint') . '</th>';
-        echo '<th>' . esc_html__('Größe', 'rh-blueprint') . '</th>';
-        echo '<th>' . esc_html__('Datum', 'rh-blueprint') . '</th>';
+        echo '<th>' . esc_html__('Datei', 'rh-backup') . '</th>';
+        echo '<th>' . esc_html__('Größe', 'rh-backup') . '</th>';
+        echo '<th>' . esc_html__('Datum', 'rh-backup') . '</th>';
         echo '<th></th>';
         echo '</tr></thead><tbody>';
 
@@ -258,7 +257,7 @@ final class DbToolsPage
             wp_nonce_field(self::NONCE_DELETE);
             echo '<input type="hidden" name="action" value="rhbp_db_delete" />';
             echo '<input type="hidden" name="backup_file" value="' . esc_attr($backup) . '" />';
-            echo '<button type="submit" class="button button-link-delete" onclick="return confirm(\'Backup wirklich löschen?\')">' . esc_html__('Löschen', 'rh-blueprint') . '</button>';
+            echo '<button type="submit" class="button button-link-delete" onclick="return confirm(\'Backup wirklich löschen?\')">' . esc_html__('Löschen', 'rh-backup') . '</button>';
             echo '</form>';
             echo '</td>';
             echo '</tr>';
@@ -271,7 +270,7 @@ final class DbToolsPage
     private function streamDownload(string $zipPath): void
     {
         if (!is_readable($zipPath)) {
-            wp_die(esc_html__('Backup-Datei nicht lesbar.', 'rh-blueprint'));
+            wp_die(esc_html__('Backup-Datei nicht lesbar.', 'rh-backup'));
         }
 
         nocache_headers();
@@ -279,6 +278,7 @@ final class DbToolsPage
         header('Content-Disposition: attachment; filename="' . basename($zipPath) . '"');
         header('Content-Length: ' . (string) filesize($zipPath));
 
+        // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Streaming großer Backup-Dateien, WP_Filesystem lädt komplette Dateien in den RAM und ist auf Shared Hosting untauglich.
         readfile($zipPath);
         exit;
     }

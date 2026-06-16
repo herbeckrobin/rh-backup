@@ -8,69 +8,69 @@ Stable tag: 0.2.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Datenbank-Backup mit Export, Import und Restore. Pure PHP, läuft auf jedem Shared Hosting, ohne externe Dienste.
+Database backup with export, import and restore. Pure PHP, runs on any shared hosting, no external services.
 
 == Description ==
 
-RH Backup sichert deine WordPress-Datenbank direkt aus dem Backend. Export, Import und Restore in einer aufgeräumten Oberfläche, die sich anfühlt wie ein Teil von WordPress.
+RH Backup creates and restores backups of your WordPress database straight from the admin area. Export, import and restore in a clean interface that feels like a native part of WordPress.
 
-Das Plugin ist bewusst schlank: kein Cron-Zwang, keine Cloud-Anbindung, keine externen Server. Die Sicherung passiert in reinem PHP und funktioniert deshalb auch auf einfachem Shared Hosting, wo viele Backup-Plugins an Speicher- oder Ausführungslimits scheitern.
+The plugin is deliberately lean: no forced cron, no cloud connection, no external servers. The backup runs in plain PHP and therefore also works on basic shared hosting, where many backup plugins hit memory or execution limits.
 
-= Was es kann =
+= Features =
 
-* Datenbank als Archiv exportieren, optional mitsamt dem Uploads-Verzeichnis
-* Backup wieder einspielen (Restore)
-* Vorhandene Backups verwalten und gezielt löschen
-* Download des Backups direkt im Browser
+* Export the database as an archive, optionally including the uploads directory
+* Restore a backup
+* Manage existing backups and delete them individually
+* Download a backup directly in the browser
 
-= Sicherheit =
+= Security =
 
-* Backups landen mit zufälligem Dateinamen in einem geschützten Verzeichnis (keine erratbaren Pfade)
-* Schutz per .htaccess gegen direkten Zugriff von außen
-* Jede Aktion ist durch Capability-Prüfung und Nonce abgesichert
+* Backups are stored with a random file name in a protected directory (no guessable paths)
+* .htaccess protection against direct access from outside
+* Every action is guarded by a capability check and a nonce
 
-= Teil der rh-blueprint Kollektion =
+= Part of the rh-blueprint collection =
 
-RH Backup gehört zu einer Familie kleiner, fokussierter Plugins von Robin Herbeck. Jedes Modul läuft eigenständig, teilt sich aber dieselbe Oberfläche und dasselbe Einstellungs-System. Du installierst nur, was du wirklich brauchst.
+RH Backup belongs to a family of small, focused plugins by Robin Herbeck. Each module runs on its own but shares the same interface and settings system. You install only what you actually need.
 
 == Installation ==
 
-1. Plugin über Plugins -> Installieren hochladen oder aus dem Verzeichnis installieren.
-2. Aktivieren.
-3. Unter RH Blueprint -> Backup öffnen.
-4. Export starten, Backup herunterladen oder bei Bedarf wieder einspielen.
+1. Upload the plugin via Plugins -> Add New, or install it from the directory.
+2. Activate it.
+3. Open RH Blueprint -> Backup.
+4. Start an export, download the backup, or restore one when needed.
 
 == Frequently Asked Questions ==
 
-= Brauche ich einen externen Dienst oder einen Account? =
+= Do I need an external service or an account? =
 
-Nein. RH Backup arbeitet komplett lokal auf deinem Server. Es werden keine Daten an Dritte übertragen.
+No. RH Backup works entirely locally on your server. No data is sent to third parties.
 
-= Läuft das Plugin auf Shared Hosting? =
+= Does it run on shared hosting? =
 
-Ja, das ist der Hauptanwendungsfall. Die Sicherung läuft in reinem PHP und kommt ohne mysqldump oder Shell-Zugriff aus.
+Yes, that is the main use case. The backup runs in plain PHP and does not require mysqldump or shell access.
 
-= Werden auch die Uploads gesichert? =
+= Are the uploads included? =
 
-Auf Wunsch. Beim Export lässt sich das Uploads-Verzeichnis optional mit einpacken.
+Optionally. When exporting, you can choose to include the uploads directory.
 
-= Wo werden die Backups gespeichert? =
+= Where are the backups stored? =
 
-In einem geschützten Verzeichnis innerhalb von wp-content, mit zufälligem Dateinamen und .htaccess-Schutz gegen direkten Zugriff.
+In a protected directory inside wp-content, with a random file name and .htaccess protection against direct access.
 
-= Kann ich ein Backup auf eine andere Seite übertragen? =
+= Can I move a backup to another site? =
 
-Ja, du kannst ein exportiertes Backup auf einer anderen Installation wieder einspielen. Für laufenden Abgleich zwischen zwei Seiten gibt es das Schwester-Plugin RH Sync.
+Yes, you can restore an exported backup on another installation. For an ongoing sync between two sites there is the sister plugin RH Sync.
 
 == Changelog ==
 
 = 0.2.3 =
-* Erste Veröffentlichung im WordPress-Plugin-Verzeichnis.
-* Export, Import und Restore der Datenbank, optional mit Uploads.
-* Backup-Härtung: zufälliger Dateiname und .htaccess-Schutz im Backup-Verzeichnis.
-* Aufgeräumte Oberfläche im nativen WordPress-Stil.
+* First release in the WordPress plugin directory.
+* Export, import and restore of the database, optionally including uploads.
+* Backup hardening: random file name and .htaccess protection in the backup directory.
+* Clean interface in the native WordPress style.
 
 == Upgrade Notice ==
 
 = 0.2.3 =
-Erste Version im WordPress-Plugin-Verzeichnis.
+First release in the WordPress plugin directory.
