@@ -5,7 +5,7 @@
  * Plugin URI:        https://github.com/herbeckrobin/rh-backup
  * Update URI:        https://github.com/herbeckrobin/rh-backup
  * Description:       DB-Backup, Export, Import und Restore für WordPress. Pure PHP, Shared-Hosting-tauglich. Teil der rh-blueprint Kollektion.
- * Version:           0.2.6
+ * Version:           0.2.7
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Author:            Robin Herbeck

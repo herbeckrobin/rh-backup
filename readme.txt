@@ -4,7 +4,7 @@ Tags: backup, database, export, import, migration
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.2.4
+Stable tag: 0.2.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -63,6 +63,9 @@ In a protected directory inside wp-content, with a random file name and .htacces
 Yes, you can restore an exported backup on another installation. For an ongoing sync between two sites there is the sister plugin RH Sync.
 
 == Changelog ==
+
+= 0.2.7 =
+* Bundles db-engine 1.1.3: fixes a restore that aborted with "no db_prefix" when the media library contained a file named manifest.json. The unpacker now matches db.sql and manifest.json by full path instead of filename.
 
 = 0.2.3 =
 * First release in the WordPress plugin directory.
