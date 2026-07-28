@@ -1,0 +1,210 @@
+/*
+ * Ergänzungen für das Offsite-Pane.
+ *
+ * Bewusst klein gehalten: das Aussehen der Karten, Felder und Buttons kommt aus dem
+ * Core (.rhbp-db-card und Verwandte), damit der Abschnitt genauso aussieht wie die
+ * Backup-Werkzeuge darüber. Hier steht nur, was es dort noch nicht gibt.
+ */
+
+/* Abstand zum vorangehenden Werkzeug-Block, der eigene Grid-Container bringt ihn nicht mit. */
+.rhbp-settings .rhbp-offsite {
+    margin-top: 32px;
+}
+
+/* Karten-Titel mit Status-Anzeige auf einer Linie. */
+.rhbp-settings .rhbp-offsite__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 0 0 8px;
+}
+
+.rhbp-settings .rhbp-offsite__head h2 {
+    margin: 0;
+}
+
+/* Der Core stylt in Karten nur text-Felder und Auswahlfelder. */
+.rhbp-settings .rhbp-db-card input[type="email"],
+.rhbp-settings .rhbp-db-card input[type="number"] {
+    width: 100%;
+    max-width: 420px;
+    padding: 8px 12px;
+    background: #fff;
+    border: 1px solid var(--rhbp-border-strong);
+    border-radius: var(--rhbp-radius-sm);
+    font-size: 14px;
+    color: var(--rhbp-text);
+}
+
+.rhbp-settings .rhbp-db-card input[type="number"] {
+    max-width: 120px;
+}
+
+/* Zwei kurze Felder nebeneinander statt untereinander. */
+.rhbp-settings .rhbp-offsite__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.rhbp-settings .rhbp-offsite__col label {
+    margin-top: 12px;
+}
+
+/* Hinweistext unter einem Feld. */
+.rhbp-settings .rhbp-offsite__hint {
+    margin: 6px 0 0;
+    color: var(--rhbp-muted);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.rhbp-settings .rhbp-offsite__hint code {
+    font-size: 12px;
+}
+
+/* Die Checkbox braucht Luft nach oben, der Core setzt nur einen Abstand darunter. */
+.rhbp-settings .rhbp-db-card .rhbp-check {
+    margin-top: 16px;
+}
+
+/* Kennzahlen im Status-Block. */
+.rhbp-settings .rhbp-offsite__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    margin: 0 0 16px;
+}
+
+.rhbp-settings .rhbp-offsite__stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.rhbp-settings .rhbp-offsite__stat-label {
+    font-size: 12px;
+    color: var(--rhbp-muted);
+}
+
+.rhbp-settings .rhbp-offsite__stat-value {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--rhbp-ink);
+}
+
+.rhbp-settings .rhbp-offsite__stat-value small {
+    font-weight: normal;
+    color: var(--rhbp-muted);
+    font-size: 12px;
+}
+
+/* Fortschritt eines laufenden Vorgangs. */
+.rhbp-settings .rhbp-offsite__progress {
+    margin: 16px 0 0;
+}
+
+.rhbp-settings .rhbp-offsite__progress[hidden] {
+    display: none;
+}
+
+.rhbp-settings .rhbp-offsite__bar {
+    height: 6px;
+    background: var(--rhbp-border);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.rhbp-settings .rhbp-offsite__bar span {
+    display: block;
+    height: 100%;
+    background: var(--rhbp-blue);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+/*
+ * Unbestimmter Zustand: solange das Archiv noch entsteht, ist die Endgrösse unbekannt
+ * und jeder Prozentwert wäre erfunden. Ein wandernder Verlauf zeigt Bewegung, ohne
+ * einen Fortschritt zu behaupten, den niemand kennt.
+ */
+.rhbp-settings .rhbp-offsite__bar.is-indeterminate span {
+    background: linear-gradient(
+        90deg,
+        var(--rhbp-border) 0%,
+        var(--rhbp-blue) 40%,
+        var(--rhbp-blue) 60%,
+        var(--rhbp-border) 100%
+    );
+    background-size: 250% 100%;
+    animation: rhbp-offsite-wander 1.6s linear infinite;
+    transition: none;
+}
+
+@keyframes rhbp-offsite-wander {
+    from { background-position: 150% 0; }
+    to { background-position: -150% 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .rhbp-settings .rhbp-offsite__bar.is-indeterminate span {
+        animation: none;
+        background: var(--rhbp-border);
+    }
+}
+
+/* Meldet sich der Vorgang nicht mehr, wird das auch sichtbar und nicht nur im Text. */
+.rhbp-settings .rhbp-offsite__progress.is-stale .rhbp-offsite__bar span {
+    background: var(--rhbp-amber, #dba617);
+    animation: none;
+}
+
+.rhbp-settings .rhbp-offsite__progress.is-stale .rhbp-offsite__progress-text {
+    color: var(--rhbp-text);
+}
+
+.rhbp-settings .rhbp-offsite__progress-text {
+    margin: 8px 0 0;
+    font-size: 13px;
+    color: var(--rhbp-muted);
+}
+
+/*
+ * Die Umfang-Auswahl neben "Jetzt sichern".
+ *
+ * Der Aktionsbereich ist ein Flex-Container, in dem sich ein Auswahlfeld sonst über die
+ * ganze Breite streckt und den Knopf an den Rand drängt.
+ */
+.rhbp-settings .rhbp-db-card__actions select {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 220px;
+}
+
+/* Der Verbindungs-Code beim Einrichten. */
+.rhbp-settings .rhbp-offsite__code {
+    display: inline-block;
+    margin: 4px 0 12px;
+    padding: 10px 18px;
+    background: #fff;
+    border: 1px solid var(--rhbp-border-strong);
+    border-radius: var(--rhbp-radius-sm);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    color: var(--rhbp-ink);
+}
+
+.rhbp-settings .rhbp-offsite__steps {
+    margin: 0 0 4px;
+    padding-left: 20px;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--rhbp-text);
+}

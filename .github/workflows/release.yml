@@ -54,6 +54,33 @@ jobs:
             exit 1
           fi
 
+      - name: Zugangsdaten der Google-Drive-Anbindung einsetzen
+        env:
+          GDRIVE_CLIENT_ID: ${{ secrets.GDRIVE_CLIENT_ID }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+        run: |
+          # Die Werte stehen bewusst nicht im Repository, sondern nur im ausgelieferten
+          # Paket. Siehe inc/Offsite/Credentials.php. Fehlen die Secrets, wird das ZIP
+          # trotzdem gebaut, das Offsite-Backup meldet dann "noch nicht eingerichtet".
+          if [ -z "$GDRIVE_CLIENT_ID" ] || [ -z "$GDRIVE_CLIENT_SECRET" ]; then
+            echo "::warning::GDRIVE_CLIENT_ID oder GDRIVE_CLIENT_SECRET fehlt. Das Release enthaelt keine Google-Drive-Anbindung."
+            exit 0
+          fi
+
+          FILE=inc/Offsite/Credentials.php
+
+          # Trennzeichen | statt /, die Werte koennen Schraegstriche enthalten.
+          sed -i "s|public const CLIENT_ID = '';|public const CLIENT_ID = '${GDRIVE_CLIENT_ID}';|" "$FILE"
+          sed -i "s|public const CLIENT_SECRET = '';|public const CLIENT_SECRET = '${GDRIVE_CLIENT_SECRET}';|" "$FILE"
+
+          # Gegenprobe, ohne die Werte ins Log zu schreiben.
+          if grep -q "public const CLIENT_ID = '';" "$FILE" || grep -q "public const CLIENT_SECRET = '';" "$FILE"; then
+            echo "::error::Die Zugangsdaten konnten nicht eingesetzt werden. Wurde Credentials.php umbenannt oder umformatiert?"
+            exit 1
+          fi
+          php -l "$FILE"
+          echo "Zugangsdaten eingesetzt."
+
       - name: Build ZIP
         run: |
           mkdir -p /tmp/build

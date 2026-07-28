@@ -20,8 +20,9 @@ final class UpdateChecker
 
     public function boot(): void
     {
-        // Ausserhalb von WordPress (z.B. Standalone-Tests) nichts tun.
-        if (! function_exists('add_filter') || ! class_exists(PucFactory::class)) {
+        // Ausserhalb von WordPress (z.B. Standalone-Tests) nichts tun. Die Konstante setzt
+        // nur die Plugin-Hauptdatei, ohne sie gibt es keinen sinnvollen Update-Kanal.
+        if (! function_exists('add_filter') || ! class_exists(PucFactory::class) || ! defined('RHBACKUP_PLUGIN_FILE')) {
             return;
         }
 
