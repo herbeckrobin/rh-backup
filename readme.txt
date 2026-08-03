@@ -4,7 +4,7 @@ Tags: backup, database, export, import, migration
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.4.0
+Stable tag: 0.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,6 +91,11 @@ In a protected directory inside wp-content, with a random file name and .htacces
 Yes, you can restore an exported backup on another installation. For an ongoing sync between two sites there is the sister plugin RH Sync.
 
 == Changelog ==
+
+= 0.5.0 =
+* Restoring a backup no longer leaves the site broken if it is interrupted. The restore now builds its tables alongside the live ones and switches over in a single atomic step at the very end, so an interruption leaves the site running on its previous data instead of half-replaced.
+* If the database cannot do that, the restore behaves exactly as before.
+* Requires db-engine 1.3.0, which is bundled.
 
 = 0.4.0 =
 * New: offsite backup to Google Drive. A full copy of the site is uploaded to the customer's own Google account on a schedule, so a copy survives even if the agency or its server does not.
