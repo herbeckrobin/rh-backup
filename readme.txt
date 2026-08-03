@@ -4,7 +4,7 @@ Tags: backup, database, export, import, migration
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.5.0
+Stable tag: 0.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,6 +91,10 @@ In a protected directory inside wp-content, with a random file name and .htacces
 Yes, you can restore an exported backup on another installation. For an ongoing sync between two sites there is the sister plugin RH Sync.
 
 == Changelog ==
+
+= 0.5.1 =
+* Fixes a restore that could fail on tables carrying named foreign keys, as used by some plugins.
+* Requires db-engine 1.3.1, which is bundled.
 
 = 0.5.0 =
 * Restoring a backup no longer leaves the site broken if it is interrupted. The restore now builds its tables alongside the live ones and switches over in a single atomic step at the very end, so an interruption leaves the site running on its previous data instead of half-replaced.
