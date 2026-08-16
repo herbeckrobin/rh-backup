@@ -18,6 +18,9 @@ declare(strict_types=1);
 
 // --- WP-Stubs ----------------------------------------------------------------
 define('ABSPATH', __DIR__ . '/');
+// Der Update-Weg braucht den Pfad der Hauptdatei. Im Betrieb setzt ihn die
+// Hauptdatei selbst, hier gibt es sie nicht.
+define('RHBACKUP_PLUGIN_FILE', dirname(__DIR__) . '/rh-backup.php');
 define('WP_CONTENT_DIR', sys_get_temp_dir() . '/rh-backup-test-content');
 define('HOUR_IN_SECONDS', 3600);
 define('MINUTE_IN_SECONDS', 60);
@@ -179,7 +182,11 @@ do_action('plugins_loaded'); // Negotiation -> Core::boot, hängt init-Hook
 do_action('init');           // bootFeatures -> core/booted -> onCoreBooted
 
 check('Core ist gebootet', \RhBlueprint\Core\Core::isBooted());
-check('Core-Version passt zum gebundelten Stand', rh_blueprint()->version() === '2.5.0', rh_blueprint()->version());
+// Gegen die gebundelte version.php prüfen, nicht gegen eine hier eingetragene
+// Nummer. Sonst prüft der Test nur noch, ob jemand zwei Stellen gepflegt hat,
+// und ein Auseinanderlaufen von Tag und version.php fällt nie auf.
+$gebundelteVersion = (string) require __DIR__ . '/../vendor/rh/blueprint-core/version.php';
+check('Core-Version passt zum gebundelten Stand', rh_blueprint()->version() === $gebundelteVersion, rh_blueprint()->version() . ' gegen ' . $gebundelteVersion);
 
 // --- DB-Engine ---------------------------------------------------------------
 check('DB-Engine ist gebootet', \RhDbEngine\DbEngine::isBooted());

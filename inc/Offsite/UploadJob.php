@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace RhBackup\Offsite;
 
 use RhBackup\Storage\BackupKind;
+use RhBlueprint\Core\Support\Bytes;
 
 /**
  * Persistenter Zustand eines Offsite-Laufs.
@@ -412,7 +413,7 @@ final class UploadJob
      */
     private static function chunkFromServerLimits(): int
     {
-        $limit = self::memoryLimitBytes();
+        $limit = Bytes::memoryLimit();
 
         // Kein Limit: das grosszügige Mass, wie bisher.
         if ($limit <= 0) {
@@ -428,28 +429,6 @@ final class UploadJob
         $gerundet = intdiv($abschnitt, self::MIN_CHUNK_SIZE) * self::MIN_CHUNK_SIZE;
 
         return max(self::MIN_CHUNK_SIZE, min(self::CHUNK_SIZE, $gerundet));
-    }
-
-    /**
-     * Das Speicherlimit in Bytes, oder 0 wenn keines gesetzt ist.
-     */
-    private static function memoryLimitBytes(): int
-    {
-        $roh = trim((string) ini_get('memory_limit'));
-
-        if ($roh === '' || $roh === '-1') {
-            return 0;
-        }
-
-        $einheit = strtolower(substr($roh, -1));
-        $zahl = (int) $roh;
-
-        return match ($einheit) {
-            'g' => $zahl * 1024 * 1024 * 1024,
-            'm' => $zahl * 1024 * 1024,
-            'k' => $zahl * 1024,
-            default => $zahl,
-        };
     }
 
     /**

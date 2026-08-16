@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace RhBackup\Admin;
 
+use RhBlueprint\Core\Admin\Assets;
+use RhBlueprint\Core\Admin\Guard;
 use RhBackup\Cron\CronHealth;
 use RhBackup\Cron\PingEndpoint;
 use RhBackup\Offsite\Connection;
@@ -91,9 +93,7 @@ final class OffsitePage
      */
     public function enqueueAssets(): void
     {
-        // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- nur Seitenerkennung.
-        $page = isset($_GET['page']) ? sanitize_key((string) $_GET['page']) : '';
-        if ($page !== 'rh-blueprint') {
+        if (! Assets::onSettings()) {
             return;
         }
 
@@ -1090,11 +1090,7 @@ JS;
      */
     public function handleRegeneratePing(): void
     {
-        if (! current_user_can('manage_options')) {
-            wp_die(esc_html__('Keine Berechtigung.', 'rh-backup'));
-        }
-
-        check_admin_referer(self::NONCE_PING);
+        Guard::form(self::NONCE_PING);
         PingEndpoint::regenerateToken();
 
         $this->redirect('offsite_ping_regenerated');
@@ -1360,18 +1356,12 @@ JS;
 
     private function guard(string $nonce): void
     {
-        if (! current_user_can(self::CAPABILITY)) {
-            wp_die(esc_html__('Keine Berechtigung.', 'rh-backup'), '', ['response' => 403]);
-        }
-        check_admin_referer($nonce);
+        Guard::form($nonce, self::CAPABILITY);
     }
 
     private function guardAjax(): void
     {
-        if (! current_user_can(self::CAPABILITY)) {
-            wp_send_json_error(['message' => __('Keine Berechtigung.', 'rh-backup')], 403);
-        }
-        check_ajax_referer(self::NONCE_AJAX, 'nonce');
+        Guard::ajax(self::NONCE_AJAX, self::CAPABILITY);
     }
 
     private function redirect(string $message, string $detail = ''): never

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace RhBackup\Admin;
 
+use RhBlueprint\Core\Admin\Guard;
 use RhBackup\Storage\BackupEntry;
 use RhBackup\Storage\BackupKind;
 use RhBackup\Storage\DriveStore;
@@ -165,10 +166,7 @@ final class DbToolsPage
      */
     public function handleDownload(): void
     {
-        if (!current_user_can(self::CAPABILITY)) {
-            wp_die(esc_html__('Keine Berechtigung.', 'rh-backup'), '', ['response' => 403]);
-        }
-        check_admin_referer(self::NONCE_DOWNLOAD);
+        Guard::form(self::NONCE_DOWNLOAD, self::CAPABILITY);
 
         $ref = isset($_POST['backup_file']) ? $this->sanitizeBackupRef(wp_unslash($_POST['backup_file'])) : '';
         $store = $this->stores->current();
@@ -237,10 +235,7 @@ final class DbToolsPage
 
     public function handleImport(): void
     {
-        if (!current_user_can(self::CAPABILITY)) {
-            wp_die(esc_html__('Keine Berechtigung.', 'rh-backup'), '', ['response' => 403]);
-        }
-        check_admin_referer(self::NONCE_IMPORT);
+        Guard::form(self::NONCE_IMPORT, self::CAPABILITY);
 
         $confirmation = isset($_POST['confirm']) ? sanitize_text_field(wp_unslash($_POST['confirm'])) : '';
         if ($confirmation !== 'JA LOESCHEN') {
@@ -349,10 +344,7 @@ final class DbToolsPage
 
     public function handleDelete(): void
     {
-        if (!current_user_can(self::CAPABILITY)) {
-            wp_die(esc_html__('Keine Berechtigung.', 'rh-backup'), '', ['response' => 403]);
-        }
-        check_admin_referer(self::NONCE_DELETE);
+        Guard::form(self::NONCE_DELETE, self::CAPABILITY);
 
         $ref = isset($_POST['backup_file']) ? $this->sanitizeBackupRef(wp_unslash($_POST['backup_file'])) : '';
         if ($ref !== '') {

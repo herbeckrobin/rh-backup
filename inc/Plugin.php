@@ -20,6 +20,7 @@ use RhBackup\Storage\RestoreRunner;
 use RhBackup\Storage\StoreRegistry;
 use RhBackup\Storage\TransferRunner;
 use RhBlueprint\Core\Core;
+use RhBlueprint\Core\UpdateChecker;
 
 /**
  * Bootstrap von rh-backup.
@@ -32,11 +33,9 @@ final class Plugin
 {
     public static function boot(): void
     {
-        // Auto-Update läuft unabhängig vom Core. Im WordPress.org-Build wird der
-        // UpdateChecker entfernt (WP.org liefert Updates selbst), darum defensiv.
-        if (class_exists(UpdateChecker::class)) {
-            (new UpdateChecker())->boot();
-        }
+        add_action('plugins_loaded', static function (): void {
+            (new UpdateChecker('rh-backup', RHBACKUP_PLUGIN_FILE))->boot();
+        }, 0);
 
         add_action('rh-blueprint/core/booted', [self::class, 'onCoreBooted']);
 
@@ -92,6 +91,7 @@ final class Plugin
         // Fälle, in denen niemand einen Aufruf eingerichtet hat.
         (new PingEndpoint($runner))->boot();
         (new CronHealth(new Notifier()))->boot();
+        (new \RhBackup\Offsite\ReportContribution())->boot();
 
         // Dashboard-Quick-Link beisteuern.
         add_filter('rh-blueprint/dashboard/quick_links', static function (array $links): array {

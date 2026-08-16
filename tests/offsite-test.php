@@ -181,11 +181,31 @@ function apply_filters(string $hook, mixed $value, mixed ...$args): mixed
 {
     return $value;
 }
-function wp_mail(string $to, string $subject, string $body): bool
+function wp_mail(string|array $to, string $subject, string $body, array $headers = []): bool
 {
-    $GLOBALS['__mails'][] = compact('to', 'subject', 'body');
+    $GLOBALS['__mails'][] = compact('to', 'subject', 'body', 'headers');
 
     return true;
+}
+function remove_action(string $hook, callable $cb, int $prio = 10): bool
+{
+    foreach ($GLOBALS['__hooks'][$hook] ?? [] as $index => $registered) {
+        if ($registered === $cb) {
+            unset($GLOBALS['__hooks'][$hook][$index]);
+
+            return true;
+        }
+    }
+
+    return false;
+}
+function esc_url(string $url): string
+{
+    return $url;
+}
+function esc_attr(string $t): string
+{
+    return $t;
 }
 function rhbp_setting(string $group, ?string $key = null, mixed $default = null): mixed
 {
@@ -254,6 +274,13 @@ function wp_remote_retrieve_body(array $r): string
 
 // --- Harness -----------------------------------------------------------------
 require __DIR__ . '/../vendor/autoload.php';
+
+// Der Core kommt zur Laufzeit über seinen Version-Negotiation-Loader, nicht über
+// diesen Autoloader. Ohne das E-Mail-Modul greift die schlichte Textfassung,
+// und genau die soll dieser Test sehen: rh-backup muss auch allein melden können.
+// Alles aus dem gebundelten Core, ohne ihn zu starten. Vorher standen hier
+// vier Einzel-requires, und die fuenfte Core-Klasse liess den Test sterben.
+require __DIR__ . '/../vendor/rh/blueprint-core/autoload-src.php';
 
 use RhBackup\Offsite\Connection;
 use RhBackup\Offsite\ExpiredSessionError;

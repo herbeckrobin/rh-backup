@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace RhBackup\Offsite;
 
+use RhBlueprint\Core\Mail\Mail;
+use RhBlueprint\Core\Mail\MailMessage;
+
 /**
  * Meldet einen gescheiterten Lauf per E-Mail.
  *
@@ -40,52 +43,36 @@ final class Notifier
 
         $site = (string) wp_parse_url((string) home_url(), PHP_URL_HOST);
 
-        $subject = sprintf(
-            /* translators: %s: site domain */
-            __('[%s] Sicherung nach Google Drive fehlgeschlagen', 'rh-backup'),
-            $site
+        $subject = __('Sicherung nach Google Drive fehlgeschlagen', 'rh-backup');
+
+        $message = new MailMessage(__('Sicherung fehlgeschlagen', 'rh-backup'), $site);
+        $message->kind(ReportContribution::KIND_FAILURE);
+
+        $message->status(
+            MailMessage::TONE_ALERT,
+            __('Die automatische Sicherung nach Google Drive ist nicht durchgelaufen.', 'rh-backup')
         );
 
-        $lines = [
-            sprintf(
-                /* translators: %s: site domain */
-                __('Die automatische Sicherung der Website %s nach Google Drive ist fehlgeschlagen.', 'rh-backup'),
-                $site
-            ),
-            '',
-            sprintf(
-                /* translators: %s: error message */
-                __('Grund: %s', 'rh-backup'),
-                $job->error !== '' ? $job->error : __('unbekannt', 'rh-backup')
-            ),
-            sprintf(
-                /* translators: %s: phase name */
-                __('Schritt: %s', 'rh-backup'),
-                $this->phaseLabel($job->failedPhase !== '' ? $job->failedPhase : $job->phase)
-            ),
-            sprintf(
-                /* translators: %s: formatted date */
-                __('Zeitpunkt: %s', 'rh-backup'),
-                wp_date('d.m.Y H:i')
-            ),
+        $rows = [
+            __('Grund', 'rh-backup') => $job->error !== '' ? $job->error : __('unbekannt', 'rh-backup'),
+            __('Schritt', 'rh-backup') => $this->phaseLabel($job->failedPhase !== '' ? $job->failedPhase : $job->phase),
+            __('Zeitpunkt', 'rh-backup') => wp_date('d.m.Y H:i'),
         ];
 
         if ($job->totalSize > 0) {
-            $lines[] = sprintf(
+            $rows[__('Fortschritt', 'rh-backup')] = sprintf(
                 /* translators: %1$s: transferred, %2$s: total */
-                __('Fortschritt: %1$s von %2$s übertragen.', 'rh-backup'),
+                __('%1$s von %2$s übertragen', 'rh-backup'),
                 size_format($job->offset),
                 size_format($job->totalSize)
             );
         }
 
-        $lines[] = '';
-        $lines[] = __('Die vorhandenen Sicherungen in Google Drive sind unverändert, es wurde nichts gelöscht.', 'rh-backup');
-        $lines[] = '';
-        $lines[] = __('Erneut versuchen lässt sich die Sicherung im Adminbereich unter RH Blueprint, Backup.', 'rh-backup');
-        $lines[] = admin_url('admin.php?page=rh-blueprint&tab=backup');
+        $message->rows($rows);
+        $message->text(__('Die vorhandenen Sicherungen in Google Drive sind unverändert, es wurde nichts gelöscht.', 'rh-backup'));
+        $message->button(__('Sicherung erneut versuchen', 'rh-backup'), admin_url('admin.php?page=rh-blueprint&tab=backup'));
 
-        wp_mail($recipient, $subject, implode("\n", $lines));
+        Mail::send($recipient, $subject, $message, $this->footerNote($site));
     }
 
     /**
@@ -108,38 +95,40 @@ final class Notifier
 
         $site = (string) wp_parse_url((string) home_url(), PHP_URL_HOST);
 
-        $subject = sprintf(
-            /* translators: %s: site domain */
-            __('[%s] Die automatische Sicherung läuft nicht', 'rh-backup'),
-            $site
+        $subject = __('Die automatische Sicherung läuft nicht', 'rh-backup');
+
+        $message = new MailMessage(__('Automatische Sicherung läuft nicht', 'rh-backup'), $site);
+        $message->kind(ReportContribution::KIND_CRON);
+
+        $message->status(
+            MailMessage::TONE_ALERT,
+            __('Seit längerem hat keine automatische Sicherung mehr stattgefunden.', 'rh-backup')
         );
 
-        $lines = [
-            sprintf(
-                /* translators: %s: site domain */
-                __('Bei der Website %s hat seit längerem keine automatische Sicherung mehr stattgefunden.', 'rh-backup'),
-                $site
-            ),
-            '',
-        ];
-
-        foreach ($problems as $problem) {
-            $lines[] = '- ' . $problem;
-        }
-
-        $lines[] = '';
+        $message->section(__('Was auffällt', 'rh-backup'));
+        $message->bullets(array_map(
+            static fn (string $problem): array => ['text' => $problem, 'tone' => MailMessage::TONE_WARN],
+            $problems
+        ));
 
         if ($pingUrl !== '') {
-            $lines[] = __('Abhilfe: diesen Aufruf einmal täglich vom Server oder einem Uptime-Dienst ausführen lassen.', 'rh-backup');
-            $lines[] = '';
-            $lines[] = 'curl -s "' . $pingUrl . '"';
-            $lines[] = '';
+            $message->section(__('Abhilfe', 'rh-backup'));
+            $message->text(__('Diesen Aufruf einmal täglich vom Server oder einem Uptime-Dienst ausführen lassen:', 'rh-backup'));
+            $message->code('curl -s "' . $pingUrl . '"');
         }
 
-        $lines[] = __('Der Zustand der Zeitsteuerung steht im Adminbereich unter RH Blueprint, Backup.', 'rh-backup');
-        $lines[] = admin_url('admin.php?page=rh-blueprint&tab=backup');
+        $message->button(__('Zeitsteuerung ansehen', 'rh-backup'), admin_url('admin.php?page=rh-blueprint&tab=backup'));
 
-        wp_mail($recipient, $subject, implode("\n", $lines));
+        Mail::send($recipient, $subject, $message, $this->footerNote($site));
+    }
+
+    private function footerNote(string $site): string
+    {
+        return sprintf(
+            /* translators: %s: site domain */
+            __('Automatische Nachricht von %s, verschickt vom Backup-Modul der Website.', 'rh-backup'),
+            $site
+        );
     }
 
     private function phaseLabel(string $phase): string

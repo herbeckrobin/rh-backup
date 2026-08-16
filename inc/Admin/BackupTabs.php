@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace RhBackup\Admin;
 
+use RhBlueprint\Core\Admin\MailPanel;
+
 /**
  * Teilt den Backup-Bereich in Untertabs auf.
  *
@@ -33,10 +35,20 @@ final class BackupTabs
      */
     public static function panes(): array
     {
-        return [
+        $panes = [
             self::PANE_OVERVIEW => __('Übersicht', 'rh-backup'),
             self::PANE_RESTORE => __('Wiederherstellen', 'rh-backup'),
         ];
+
+        // Die Mail-Einstellungen kommen aus dem Core, gehören aber in diese
+        // Leiste und nicht in eine zweite darüber.
+        $mail = MailPanel::tabLabel(self::TAB_ID);
+
+        if ($mail !== null) {
+            $panes[MailPanel::TAB] = $mail;
+        }
+
+        return $panes;
     }
 
     /**
