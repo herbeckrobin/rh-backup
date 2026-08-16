@@ -281,6 +281,7 @@ require __DIR__ . '/../vendor/autoload.php';
 // Alles aus dem gebundelten Core, ohne ihn zu starten. Vorher standen hier
 // vier Einzel-requires, und die fuenfte Core-Klasse liess den Test sterben.
 require __DIR__ . '/../vendor/rh/blueprint-core/autoload-src.php';
+require __DIR__ . '/../vendor/rh/tick-engine/autoload-src.php';
 
 use RhBackup\Offsite\Connection;
 use RhBackup\Offsite\ExpiredSessionError;

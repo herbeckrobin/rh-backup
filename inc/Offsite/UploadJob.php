@@ -6,6 +6,7 @@ namespace RhBackup\Offsite;
 
 use RhBackup\Storage\BackupKind;
 use RhBlueprint\Core\Support\Bytes;
+use RhTickEngine\TickJob;
 
 /**
  * Persistenter Zustand eines Offsite-Laufs.
@@ -18,7 +19,7 @@ use RhBlueprint\Core\Support\Bytes;
  * Index. Die Kennung dient trotzdem der Zuordnung: ein verspäteter Tick eines alten
  * Laufs darf einen neuen nicht anfassen.
  */
-final class UploadJob
+final class UploadJob implements TickJob
 {
     public const OPTION = 'rhbackup_offsite_job';
 
@@ -376,6 +377,56 @@ final class UploadJob
         }
 
         return '';
+    }
+
+    // ============================================================
+    // Was der geteilte Antrieb sehen muss (siehe RhTickEngine\TickJob)
+    // ============================================================
+
+    public function jobId(): string
+    {
+        return $this->jobId;
+    }
+
+    public function spawnToken(): string
+    {
+        return $this->spawnToken;
+    }
+
+    /**
+     * Es gibt hier immer nur einen Lauf, also eine feste Kennung.
+     *
+     * rh-sync sperrt dagegen pro Gegenstelle: zwei Peers dürfen gleichzeitig
+     * laufen, zwei Sicherungen desselben Servers nicht.
+     */
+    public function lockKey(): string
+    {
+        return 'offsite';
+    }
+
+    public function retries(): int
+    {
+        return $this->retries;
+    }
+
+    public function setRetries(int $n): void
+    {
+        $this->retries = $n;
+    }
+
+    public function failWith(string $error): void
+    {
+        $this->finishFailure($error);
+    }
+
+    public function stageName(): string
+    {
+        return $this->phase;
+    }
+
+    public function touch(): void
+    {
+        $this->save();
     }
 
     public function duration(): int
