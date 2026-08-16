@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace RhBackup\Admin;
 
+use RhBlueprint\Core\Admin\Ui;
 use RhBlueprint\Core\Admin\Assets;
 use RhBlueprint\Core\Admin\Guard;
 use RhBackup\Cron\CronHealth;
@@ -93,7 +94,7 @@ final class OffsitePage
      */
     public function enqueueAssets(): void
     {
-        if (! Assets::onSettings()) {
+        if (! Assets::onSettings(self::TAB_ID)) {
             return;
         }
 
@@ -300,7 +301,7 @@ final class OffsitePage
                 esc_attr(self::MODAL_STORE_ID),
                 esc_attr__('Einstellungen des Ablageorts', 'rh-backup'),
                 esc_attr__('Einstellungen des Ablageorts', 'rh-backup'),
-                $this->gearIcon()
+                Ui::icon('gear')
             );
         }
         echo '</div>';
@@ -642,7 +643,7 @@ final class OffsitePage
             esc_attr(self::MODAL_ID),
             esc_attr__('Einstellungen', 'rh-backup'),
             esc_attr__('Einstellungen der automatischen Sicherung', 'rh-backup'),
-            $this->gearIcon()
+            Ui::icon('gear')
         );
         echo '</div>';
 
@@ -729,22 +730,6 @@ final class OffsitePage
         return sprintf(_n('%d Stunde', '%d Stunden', $stunden, 'rh-backup'), $stunden);
     }
 
-    /**
-     * Das Zahnrad-Symbol. Bewusst inline und nicht als Datei: es ist ein einziges Symbol.
-     */
-    private function gearIcon(): string
-    {
-        return '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
-            . 'stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
-            . '<circle cx="12" cy="12" r="3"/>'
-            . '<path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 '
-            . '1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 '
-            . '0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09a1.65 1.65 0 '
-            . '0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 '
-            . '1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 '
-            . '2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 '
-            . '0-1.51 1z"/></svg>';
-    }
 
     /**
      * Konto und Ordner des Ablageorts, hinter dem Zahnrad am Schalter.
@@ -759,25 +744,13 @@ final class OffsitePage
             return;
         }
 
-        printf(
-            '<div class="rhbp-modal-backdrop" id="%s" data-rhbp-modal-backdrop>',
-            esc_attr(self::MODAL_STORE_ID)
-        );
-        echo '<div class="rhbp-modal" role="dialog" aria-modal="true" aria-label="'
-            . esc_attr__('Einstellungen des Ablageorts', 'rh-backup') . '">';
+        echo Ui::modalOpen([
+            'id' => self::MODAL_STORE_ID,
+            'title' => __('Google Drive', 'rh-backup'),
+            'subtitle' => __('Welches Konto die Sicherungen aufnimmt und in welchem Ordner sie landen.', 'rh-backup'),
+            'icon' => '',
+        ]);
 
-        echo '<div class="rhbp-modal__head">';
-        echo '<div class="rhbp-modal__head-l"><div>';
-        echo '<h3 class="rhbp-modal__title">' . esc_html__('Google Drive', 'rh-backup') . '</h3>';
-        echo '<p class="rhbp-modal__sub">' . esc_html__('Welches Konto die Sicherungen aufnimmt und in welchem Ordner sie landen.', 'rh-backup') . '</p>';
-        echo '</div></div>';
-        printf(
-            '<button type="button" class="rhbp-btn rhbp-btn--ghost rhbp-btn--icon" data-rhbp-modal-close aria-label="%s">&times;</button>',
-            esc_attr__('Schließen', 'rh-backup')
-        );
-        echo '</div>';
-
-        echo '<div class="rhbp-modal__body">';
         if (Settings::hasOAuthClient()) {
             $this->renderConnectionCard();
         } else {
@@ -785,9 +758,10 @@ final class OffsitePage
             echo esc_html__('Die Anbindung an Google Drive ist für diese Installation nicht eingerichtet. Bitte wende dich an deinen Betreuer.', 'rh-backup');
             echo '</p></div>';
         }
-        echo '</div>';
 
-        echo '</div></div>';
+        // Ohne Fusszeile: dieser Dialog hat nichts zu bestaetigen, das
+        // Verbinden mit Google passiert in der Karte darin.
+        echo Ui::modalClose(['foot' => false]);
     }
 
     /**
@@ -802,39 +776,25 @@ final class OffsitePage
     {
         $probleme = CronHealth::problems();
 
-        printf(
-            '<div class="rhbp-modal-backdrop" id="%s" data-rhbp-modal-backdrop>',
-            esc_attr(self::MODAL_ID)
-        );
-        echo '<div class="rhbp-modal" role="dialog" aria-modal="true" aria-label="'
-            . esc_attr__('Einstellungen der automatischen Sicherung', 'rh-backup') . '">';
+        echo Ui::modalOpen([
+            'id' => self::MODAL_ID,
+            'title' => __('Automatische Sicherung', 'rh-backup'),
+            'subtitle' => __('Wohin gesichert wird, wie oft, und ob der Zeitplan wirklich läuft.', 'rh-backup'),
+            'icon' => '',
+        ]);
 
-        echo '<div class="rhbp-modal__head">';
-        echo '<div class="rhbp-modal__head-l"><div>';
-        echo '<h3 class="rhbp-modal__title">' . esc_html__('Automatische Sicherung', 'rh-backup') . '</h3>';
-        echo '<p class="rhbp-modal__sub">' . esc_html__('Wohin gesichert wird, wie oft, und ob der Zeitplan wirklich läuft.', 'rh-backup') . '</p>';
-        echo '</div></div>';
-        printf(
-            '<button type="button" class="rhbp-btn rhbp-btn--ghost rhbp-btn--icon" data-rhbp-modal-close aria-label="%s">&times;</button>',
-            esc_attr__('Schließen', 'rh-backup')
+        echo Ui::subtabs(
+            [
+                'zeitplan' => __('Zeitplan und Umfang', 'rh-backup'),
+                'verlaesslich' => __('Verlässlichkeit', 'rh-backup'),
+            ],
+            'zeitplan',
+            [],
+            ['verlaesslich' => $probleme === [] ? '' : '!'],
+            ['verlaesslich' => 'err']
         );
-        echo '</div>';
 
-        echo '<div class="rhbp-modal__body">';
-
-        echo '<div class="rhbp-subtabs">';
-        printf(
-            '<button type="button" class="rhbp-subtab is-active" data-rhbp-subtab="zeitplan">%s</button>',
-            esc_html__('Zeitplan und Umfang', 'rh-backup')
-        );
-        printf(
-            '<button type="button" class="rhbp-subtab" data-rhbp-subtab="verlaesslich">%s%s</button>',
-            esc_html__('Verlässlichkeit', 'rh-backup'),
-            $probleme === [] ? '' : ' <span class="rhbp-pill rhbp-pill--err">!</span>'
-        );
-        echo '</div>';
-
-        echo '<div class="rhbp-tabpane is-active" data-rhbp-pane="zeitplan">';
+        echo Ui::paneOpen('zeitplan', true);
         $this->renderScheduleCard();
 
         /**
@@ -845,12 +805,12 @@ final class OffsitePage
         do_action('rh-backup/settings_modal', 'zeitplan');
         echo '</div>';
 
-        echo '<div class="rhbp-tabpane" data-rhbp-pane="verlaesslich">';
+        echo Ui::paneOpen('verlaesslich', false);
         $this->renderReliabilityCard();
         echo '</div>';
 
-        echo '</div>';
-        echo '</div></div>';
+        // Jeder Bereich bringt seinen eigenen Speichern-Knopf mit.
+        echo Ui::modalClose(['foot' => false]);
 
         $this->printModalReopenScript();
     }
