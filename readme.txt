@@ -4,7 +4,7 @@ Tags: backup, database, export, import, migration
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.5.2
+Stable tag: 0.5.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,6 +91,9 @@ In a protected directory inside wp-content, with a random file name and .htacces
 Yes, you can restore an exported backup on another installation. For an ongoing sync between two sites there is the sister plugin RH Sync.
 
 == Changelog ==
+
+= 0.5.3 =
+* Fix: bundle core 2.6.1. The 2.6.0 release bundled an incomplete core.
 
 = 0.5.2 =
 * Internal: shared tick engine and building blocks from core 2.6.0, db engine 1.4.0.
