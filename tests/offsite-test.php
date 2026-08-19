@@ -283,6 +283,23 @@ require __DIR__ . '/../vendor/autoload.php';
 require __DIR__ . '/../vendor/rh/blueprint-core/autoload-src.php';
 require __DIR__ . '/../vendor/rh/tick-engine/autoload-src.php';
 
+// Die db-engine bringt keine solche Datei mit: ihr Loader hängt an plugins_loaded, und
+// der Haken fällt hier nie. Ohne das fehlt die Ablage, sobald ein Test Markup rendert.
+spl_autoload_register(static function (string $class): void {
+    $prefix = 'RhDbEngine\\';
+
+    if (! str_starts_with($class, $prefix)) {
+        return;
+    }
+
+    $datei = __DIR__ . '/../vendor/rh/db-engine/src/'
+        . str_replace('\\', '/', substr($class, strlen($prefix))) . '.php';
+
+    if (is_file($datei)) {
+        require_once $datei;
+    }
+});
+
 use RhBackup\Offsite\Connection;
 use RhBackup\Offsite\ExpiredSessionError;
 use RhBackup\Offsite\GoogleDrive;
@@ -890,6 +907,188 @@ check(
     'Sicherungskopien werden kürzer aufbewahrt als planmässige',
     BackupKind::defaultKeep(BackupKind::PRESYNC) < BackupKind::defaultKeep(BackupKind::AUTOMATIC)
 );
+
+// --- 13. Der Weg von der Platte zu Google Drive --------------------------------
+
+/*
+ * Warum dieser Abschnitt existiert:
+ *
+ * Bis 0.5.3 gab es keinen. Das Feld "In Google Drive" ist gesperrt, solange kein Konto
+ * verbunden ist. Verbunden wird nur in der Verbindungskarte, die Karte steht nur im
+ * Fenster hinter dem Zahnrad, und das Zahnrad stand nur da, wenn Drive bereits galt.
+ * Eine geschlossene Schleife: keine Installation konnte je verbinden.
+ *
+ * Der Test prüft deshalb nicht eine einzelne Methode, sondern die Erreichbarkeit im
+ * fertigen Markup der Übersicht: Öffner vorhanden, Fenster vorhanden, Verbinden-Knopf
+ * darin. Fällt eines davon weg, ist die Schleife zurück.
+ */
+
+section('Von der Platte zu Google Drive');
+
+use RhBackup\Admin\BackupTabs;
+use RhBackup\Admin\OffsitePage;
+use RhBackup\Offsite\UploadRunner;
+use RhBackup\Storage\StoreRegistry;
+use RhBackup\Storage\TransferRunner;
+use RhDbEngine\Storage;
+
+// Kennungen aus dem Markup. Sie sind der Vertrag zwischen Öffner und Fenster, den die
+// Mechanik des Core auswertet, deshalb stehen sie hier wörtlich.
+const MODAL_STORE_ID = 'rhbp-modal-backup-store';
+
+define('WP_CONTENT_DIR', sys_get_temp_dir() . '/rhbackup-test-content');
+
+// Stubs, die nur die Ausgabe braucht.
+function esc_attr__(string $t, string $d = 'default'): string
+{
+    return $t;
+}
+function esc_js(string $t): string
+{
+    return addslashes($t);
+}
+function esc_textarea(string $t): string
+{
+    return $t;
+}
+function _n(string $single, string $plural, int $number, string $d = 'default'): string
+{
+    return $number === 1 ? $single : $plural;
+}
+function sanitize_key(string $key): string
+{
+    return strtolower(preg_replace('/[^a-z0-9_\-]/i', '', $key) ?? '');
+}
+function wp_unslash(mixed $value): mixed
+{
+    return is_string($value) ? stripslashes($value) : $value;
+}
+function wp_create_nonce(string $action = ''): string
+{
+    return 'nonce-' . md5($action);
+}
+function wp_nonce_field(string $action = '', string $name = '_wpnonce', bool $referer = true, bool $echo = true): string
+{
+    $feld = '<input type="hidden" name="' . $name . '" value="' . wp_create_nonce($action) . '" />';
+    if ($echo) {
+        echo $feld;
+    }
+
+    return $feld;
+}
+function checked(mixed $a, mixed $b = true, bool $echo = true): string
+{
+    return __checked_selected_helper($a, $b, $echo, 'checked');
+}
+function selected(mixed $a, mixed $b = true, bool $echo = true): string
+{
+    return __checked_selected_helper($a, $b, $echo, 'selected');
+}
+function disabled(mixed $a, mixed $b = true, bool $echo = true): string
+{
+    return __checked_selected_helper($a, $b, $echo, 'disabled');
+}
+function __checked_selected_helper(mixed $a, mixed $b, bool $echo, string $type): string
+{
+    $out = (string) $a === (string) $b ? " {$type}='{$type}'" : '';
+    if ($echo) {
+        echo $out;
+    }
+
+    return $out;
+}
+function wp_print_inline_script_tag(string $js, array $attr = []): void
+{
+    echo '<script>' . $js . '</script>';
+}
+function number_format_i18n(float $number, int $decimals = 0): string
+{
+    return number_format($number, $decimals);
+}
+
+/**
+ * Die Übersicht, so wie sie im Browser ankommt.
+ *
+ * Die beiden Läufer gehen die Ausgabe nichts an, sie kommen deshalb ohne Konstruktor:
+ * ihre eigenen Abhängigkeiten (Exporter, Importer, wpdb) hätten in diesem Test nichts
+ * zu tun. Alles, was die Ausgabe wirklich liest, ist echt.
+ */
+function uebersicht_markup(): string
+{
+    $connection = new Connection();
+    $drive = new GoogleDrive($connection);
+    $stores = new StoreRegistry(new Storage(), $drive, $connection);
+
+    $runner = (new ReflectionClass(UploadRunner::class))->newInstanceWithoutConstructor();
+    $transfer = (new ReflectionClass(TransferRunner::class))->newInstanceWithoutConstructor();
+
+    $page = new OffsitePage($connection, $drive, $runner, $stores, $transfer);
+
+    ob_start();
+    $page->renderPane(BackupTabs::PANE_OVERVIEW);
+
+    return (string) ob_get_clean();
+}
+
+$GLOBALS['__options'] = [];
+$GLOBALS['__transients'] = [];
+$GLOBALS['__cron'] = [];
+$_GET = [];
+
+$markup = uebersicht_markup();
+
+check('Ohne Konto gilt die Platte', Settings::mode() === Settings::MODE_LOCAL);
+check(
+    'Und das Feld für Drive ist gesperrt',
+    (bool) preg_match('/value=.drive.[^>]*disabled/', $markup)
+);
+
+// Der Kern: das Zahnrad steht auch da, solange die Platte gilt.
+$oeffner = strpos($markup, 'data-rhbp-modal-open="' . MODAL_STORE_ID . '"');
+$fenster = strpos($markup, 'id="' . MODAL_STORE_ID . '"');
+$verbinden = strpos($markup, 'value="rhbackup_offsite_connect"');
+
+check('Das Zahnrad des Ablageorts steht auch bei lokaler Ablage da', $oeffner !== false);
+check('Das Fenster dazu wird ausgegeben', $fenster !== false);
+check('Der Verbinden-Knopf steht darin', $verbinden !== false && $fenster !== false && $verbinden > $fenster);
+check(
+    'Es gibt keine zweite Stelle zum Verbinden, die den Test bestehen liesse',
+    substr_count($markup, 'value="rhbackup_offsite_connect"') === 1
+);
+
+// Der Geräte-Code steht in derselben Karte. Nach dem Klick führt eine Weiterleitung
+// zurück auf die Seite, das Fenster wäre wieder zu: dann stünde in der Meldung ein
+// Code zu bestätigen, den niemand sieht.
+$_GET = ['rhbp_message' => 'offsite_pending'];
+set_transient('rhbackup_offsite_pending', ['user_code' => 'ABCD-EFGH', 'verification_url' => 'https://www.google.com/device', 'expires_in' => 900], 900);
+
+$markupPending = uebersicht_markup();
+
+check('Der Geräte-Code steht im Markup', str_contains($markupPending, 'ABCD-EFGH'));
+check(
+    'Und das Fenster geht dafür von selbst wieder auf',
+    str_contains($markupPending, '"' . MODAL_STORE_ID . '"') && str_contains($markupPending, 'oeffner.click()')
+);
+
+delete_transient('rhbackup_offsite_pending');
+$_GET = [];
+
+// Mit verbundenem Konto ist der Ort wählbar, und die Karte zeigt das Konto.
+(new Connection())->storeRefreshToken('refresh-xyz', 'kunde@gmail.com');
+
+// Was in Drive liegt, kommt aus dem Zwischenspeicher: sonst fragt die Übersicht beim
+// Aufbau nach den verstreuten Sicherungen wirklich bei Google nach. Dieser Test misst
+// Markup, nicht das Netz.
+set_transient('rhbackup_drive_list', [], 120);
+
+$markupVerbunden = uebersicht_markup();
+
+check(
+    'Mit verbundenem Konto ist das Feld für Drive nicht mehr gesperrt',
+    ! preg_match('/value=.drive.[^>]*disabled/', $markupVerbunden)
+);
+check('Und das Zahnrad bleibt', str_contains($markupVerbunden, 'data-rhbp-modal-open="' . MODAL_STORE_ID . '"'));
+check('Das verbundene Konto steht im Fenster', str_contains($markupVerbunden, 'kunde@gmail.com'));
 
 // --- Ergebnis ----------------------------------------------------------------
 echo "\n";
