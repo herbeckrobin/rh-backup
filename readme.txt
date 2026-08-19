@@ -4,7 +4,7 @@ Tags: backup, database, export, import, migration
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.1
-Stable tag: 0.5.3
+Stable tag: 0.5.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -91,6 +91,10 @@ In a protected directory inside wp-content, with a random file name and .htacces
 Yes, you can restore an exported backup on another installation. For an ongoing sync between two sites there is the sister plugin RH Sync.
 
 == Changelog ==
+
+= 0.5.4 =
+* Fix: Google Drive could never be connected. Connecting lives behind the gear next to the storage switch, and that gear only showed up once Drive was already the active location, while Drive could only be picked once an account was connected. The gear now sits there at all times, so the account is connected before the location is switched.
+* The device code stays on screen after pressing connect instead of disappearing behind a closed dialog, and once the account is linked the page says so rather than still asking for the code.
 
 = 0.5.3 =
 * Fix: bundle core 2.6.1. The 2.6.0 release bundled an incomplete core.
