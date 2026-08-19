@@ -17,6 +17,7 @@ use RhBackup\Offsite\UploadJob;
 use RhBackup\Offsite\UploadRunner;
 use RhBackup\Storage\BackupEntry;
 use RhBackup\Storage\BackupStore;
+use RhBackup\Storage\DriveStore;
 use RhBackup\Storage\LocalStore;
 use RhBackup\Storage\StoreRegistry;
 use RhBackup\Storage\TransferJob;
@@ -187,6 +188,10 @@ final class OffsitePage
         // Die Modale stehen ausserhalb der Karten, sonst erben sie deren Platzierung.
         $this->renderStoreModal();
         $this->renderSettingsModal();
+
+        // Nach einer Weiterleitung geht das Fenster wieder auf, in dem gearbeitet wurde.
+        // Steht hier, weil es beide betrifft, nicht nur die automatische Sicherung.
+        $this->printModalReopenScript();
     }
 
     private function renderConnectionCard(): void
@@ -293,9 +298,11 @@ final class OffsitePage
 
         // Das Zahnrad gehört zum Ort, nicht zur automatischen Sicherung: das Google-Konto
         // wird auch gebraucht, wenn man ausschliesslich von Hand sichert.
-        if ($aktuell->id() === LocalStore::ID) {
-            echo '';
-        } else {
+        //
+        // Es steht deshalb auch da, solange die Platte gilt. Sonst gäbe es keinen Weg von
+        // hier nach Google Drive: das Feld daneben bleibt gesperrt, bis ein Konto
+        // verbunden ist, und verbunden wird ausschliesslich in diesem Fenster.
+        if ($this->hasRemoteStore()) {
             printf(
                 '<button type="button" class="rhbp-btn rhbp-btn--ghost rhbp-btn--icon" data-rhbp-modal-open="%s" title="%s" aria-label="%s">%s</button>',
                 esc_attr(self::MODAL_STORE_ID),
@@ -732,15 +739,30 @@ final class OffsitePage
 
 
     /**
+     * Gibt es einen Ablageort, der Einstellungen hat?
+     *
+     * Nur Google Drive hat welche: die Platte braucht weder Konto noch Ordner. Nimmt ein
+     * Filter den Ort aus der Liste, verschwinden Zahnrad und Fenster mit ihm.
+     */
+    private function hasRemoteStore(): bool
+    {
+        return $this->stores->get(DriveStore::ID) !== null;
+    }
+
+    /**
      * Konto und Ordner des Ablageorts, hinter dem Zahnrad am Schalter.
      *
      * Nur was zum Ort selbst gehört. Der Ort wird nicht hier gewählt, sondern mit dem
      * Schalter davor: eine Entscheidung, die alles bestimmt, gehört nicht in ein Fenster,
      * das man erst öffnen muss.
+     *
+     * Es hängt bewusst nicht am gerade geltenden Ort, sondern nur daran, ob es Google
+     * Drive überhaupt gibt. Das Konto wird verbunden, BEVOR umgeschaltet werden kann,
+     * denn ohne Konto ist der Ort nicht wählbar.
      */
     private function renderStoreModal(): void
     {
-        if ($this->stores->current() instanceof LocalStore) {
+        if (! $this->hasRemoteStore()) {
             return;
         }
 
@@ -811,12 +833,10 @@ final class OffsitePage
 
         // Jeder Bereich bringt seinen eigenen Speichern-Knopf mit.
         echo Ui::modalClose(['foot' => false]);
-
-        $this->printModalReopenScript();
     }
 
     /**
-     * Öffnet das Modal nach dem Speichern wieder.
+     * Öffnet das Fenster nach einer Weiterleitung wieder.
      *
      * Jede Einstellung führt über eine Weiterleitung zurück auf die Seite, und danach ist
      * das Modal zu. Wer zwei Dinge nacheinander einstellt, müsste es jedes Mal neu
@@ -828,18 +848,27 @@ final class OffsitePage
         // phpcs:ignore WordPress.Security.NonceVerification.Recommended -- reine Anzeige-Entscheidung.
         $key = isset($_GET['rhbp_message']) ? sanitize_key((string) $_GET['rhbp_message']) : '';
 
-        // Was der Knopf in der Übersicht auslöst, gehört nicht ins Modal.
+        // Was der Knopf in der Übersicht auslöst, gehört nicht ins Modal. Erster Wert
+        // ist das Fenster, zweiter der Bereich darin, leer wenn es nur einen gibt.
         $ausDemModal = [
-            'offsite_saved' => 'zeitplan',
-            'offsite_ping_regenerated' => 'verlaesslich',
+            'offsite_saved' => [self::MODAL_ID, 'zeitplan'],
+            'offsite_ping_regenerated' => [self::MODAL_ID, 'verlaesslich'],
+
+            // Der Geräte-Code steht in der Verbindungskarte, und die steht im Fenster des
+            // Ablageorts. Bliebe es nach dem Klick zu, forderte die Meldung dazu auf,
+            // einen Code zu bestätigen, den niemand sieht.
+            'offsite_pending' => [self::MODAL_STORE_ID, ''],
+            'offsite_connected' => [self::MODAL_STORE_ID, ''],
         ];
 
         if (! isset($ausDemModal[$key])) {
             return;
         }
 
-        $modalId = wp_json_encode(self::MODAL_ID);
-        $pane = wp_json_encode($ausDemModal[$key]);
+        [$modal, $bereich] = $ausDemModal[$key];
+
+        $modalId = wp_json_encode($modal);
+        $pane = wp_json_encode($bereich);
 
         // Geöffnet wird über den vorhandenen Knopf, nicht über einen Nachbau: wie ein
         // Modal genau aufgeht, weiss der Core, und das soll auch so bleiben.
@@ -856,6 +885,8 @@ window.addEventListener('load', function(){
     oeffner.click();
 
     var ziel = {$pane};
+    if (!ziel) { return; }
+
     backdrop.querySelectorAll('[data-rhbp-subtab]').forEach(function(t){
         t.classList.toggle('is-active', t.getAttribute('data-rhbp-subtab') === ziel);
     });
@@ -1077,7 +1108,13 @@ JS;
             .then(function(r){ return r.json(); })
             .then(function(res){
                 if (res && res.success && res.data && res.data.status === 'connected') {
-                    window.location.reload();
+                    // Nicht einfach neu laden: in der Adresse steht noch die Bitte, den
+                    // Code zu bestätigen. Sie ist ab jetzt falsch, und das Fenster soll
+                    // mit dem verbundenen Konto wieder aufgehen.
+                    var ziel = new URL(window.location.href);
+                    ziel.searchParams.set('rhbp_message', 'offsite_connected');
+                    ziel.searchParams.delete('rhbp_detail');
+                    window.location.replace(ziel.toString());
                     return;
                 }
                 if (res && res.data && res.data.status === 'stopped') { return; }
